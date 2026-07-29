@@ -4,6 +4,9 @@ config-version: 2
 
 profile: 'fpl'
 
+vars:
+  current_season: '2026-27'
+
 model-paths: ["models"]
 macro-paths: ["macros"]
 test-paths: ["tests"]

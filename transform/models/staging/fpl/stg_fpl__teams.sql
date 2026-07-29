@@ -12,6 +12,7 @@ unnested as (
 
 select
     (team ->> 'id')::int                    as team_id,
+    (team ->> 'code')::int                  as team_code,
     team ->> 'name'                         as team_name,
     team ->> 'short_name'                   as team_short_name,
     (team ->> 'strength')::int              as strength,

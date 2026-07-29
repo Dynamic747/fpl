@@ -12,6 +12,7 @@ unnested as (
 
 select
     (player ->> 'id')::int                            as player_id,
+    (player ->> 'code')::int                          as player_code,
     player ->> 'first_name'                           as first_name,
     player ->> 'second_name'                          as second_name,
     player ->> 'web_name'                             as web_name,

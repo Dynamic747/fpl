@@ -25,7 +25,7 @@ select
     nullif(player ->> 'now_cost', '')::numeric / 10                        as end_of_season_price,
     nullif(player ->> 'total_points', '')::int                            as total_points,
     nullif(player ->> 'minutes', '')::int                                 as minutes,
-    nullif(player ->> 'penalties_order', '')::int                         as penalties_order,
-    nullif(player ->> 'direct_freekicks_order', '')::int                  as direct_freekicks_order,
-    nullif(player ->> 'corners_and_indirect_freekicks_order', '')::int    as corners_and_indirect_freekicks_order
+    nullif(nullif(player ->> 'penalties_order', ''), 'None')::int                      as penalties_order,
+    nullif(nullif(player ->> 'direct_freekicks_order', ''), 'None')::int               as direct_freekicks_order,
+    nullif(nullif(player ->> 'corners_and_indirect_freekicks_order', ''), 'None')::int as corners_and_indirect_freekicks_order
 from unnested

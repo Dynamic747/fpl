@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: int_player_gameweek_performance_unioned
+    description: >
+      Unions current-season live player-gameweek stats with 5 seasons of
+      historical stats, both resolved to the stable player_code/team_code
+      identifiers. Feeds fct_player_gameweek_performance directly.
+    columns:
+      - name: player_code
+        tests: [not_null]
+      - name: season
+        tests: [not_null]
+      - name: gameweek_id
+        tests: [not_null]

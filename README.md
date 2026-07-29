@@ -57,7 +57,7 @@ and points changes across the season:
 - `raw.bootstrap_static_snapshot`, `raw.fixtures_snapshot`
 - `raw.element_summary_snapshot` (one row per player per run)
 - `raw.entry_snapshot`, `raw.entry_history_snapshot`, `raw.entry_picks_snapshot`, `raw.entry_transfers_snapshot`
-- `raw.historical_players_snapshot`, `raw.historical_gw_stats_snapshot` (one row per season per load)
+- `raw.historical_players_snapshot`, `raw.historical_teams_snapshot`, `raw.historical_gw_stats_snapshot` (one row per season per load)
 
 ## Transform (dbt)
 
@@ -73,9 +73,23 @@ cd transform
 - `models/staging/fpl/stg_fpl__*` — thin 1:1 models over the `raw` sources,
   selecting the latest snapshot per key and doing light typing/renaming only.
   Materialized as views in the `staging` schema.
-- `models/intermediate/` — not yet built. Will hold joined/derived logic
-  (e.g. rolling form, fixture-adjusted expected points) that isn't yet a
-  business-facing mart.
-- `models/marts/` — not yet built. Final fact/dimension tables the
-  prediction model and squad optimizer will query against. Materialized as
-  tables in the `marts` schema.
+- `models/intermediate/int_player_gameweek_performance_unioned` — unions
+  current-season live stats with 5 seasons of historical stats, resolving
+  both to the stable `player_code`/`team_code` identifiers (FPL reassigns
+  `id` every season, so current and historical rows use different id spaces).
+- `models/marts/` — dimensional model (Kimball-style, natural keys, no
+  surrogate keys given the data volume):
+  - `dim_players`, `dim_teams` — conformed across current + historical
+    seasons. Players/teams no longer in the Premier League still appear
+    (with null current-state attributes) so historical facts always have
+    somewhere to join — a current-only dimension would orphan every
+    relegated club and departed player.
+  - `dim_positions`, `dim_gameweeks`
+  - `fct_player_gameweek_performance` — grain: player × season × gameweek.
+    The training-data fact table.
+  - `fct_fixtures` — grain: fixture × season. Current season only.
+  - `fct_entry_gameweek_performance`, `fct_entry_picks`, `fct_entry_transfers`
+    — your manager account: points/rank/bank per gameweek, squad picks,
+    transfer log.
+
+  All materialized as tables in the `marts` schema.

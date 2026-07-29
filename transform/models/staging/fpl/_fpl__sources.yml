@@ -30,3 +30,8 @@ sources:
           Bulk-loaded from vaastav/Fantasy-Premier-League on GitHub: one row per
           season, payload is that season's player list CSV as JSON (includes the
           cross-season-stable `code` field and set-piece order fields).
+      - name: historical_teams_snapshot
+        description: >
+          Bulk-loaded from vaastav/Fantasy-Premier-League on GitHub: one row per
+          season, payload is that season's team list CSV as JSON (includes the
+          cross-season-stable `code` field).

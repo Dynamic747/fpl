@@ -1,0 +1,99 @@
+version: 2
+
+models:
+  - name: dim_players
+    description: >
+      Conformed player dimension across current + 5 historical seasons,
+      keyed by the stable player_code. Players no longer in the Premier
+      League have null current_price/form/status but still appear so
+      historical facts have somewhere to join.
+    columns:
+      - name: player_code
+        tests: [unique, not_null]
+
+  - name: dim_teams
+    description: >
+      Conformed team dimension across current + 5 historical seasons,
+      keyed by the stable team_code. Relegated/departed clubs have null
+      strength ratings but still appear so historical facts have somewhere
+      to join.
+    columns:
+      - name: team_code
+        tests: [unique, not_null]
+
+  - name: dim_positions
+    description: GK/DEF/MID/FWD, stable across all seasons.
+    columns:
+      - name: position_id
+        tests: [unique, not_null]
+
+  - name: dim_gameweeks
+    description: >
+      One row per season+gameweek. Current season has full metadata
+      (deadline, finished flag); historical seasons only have the gameweek
+      number.
+    columns:
+      - name: season
+        tests: [not_null]
+      - name: gameweek_id
+        tests: [not_null]
+
+  - name: fct_player_gameweek_performance
+    description: >
+      Grain: player x season x gameweek. Actual points and underlying stats,
+      current season (live, fills in as gameweeks are played) unioned with
+      5 historical seasons (training data).
+    columns:
+      - name: player_code
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_players')
+                field: player_code
+      - name: season
+        tests: [not_null]
+      - name: gameweek_id
+        tests: [not_null]
+
+  - name: fct_fixtures
+    description: "Grain: fixture x season. Current season only."
+    columns:
+      - name: fixture_id
+        tests: [unique, not_null]
+      - name: home_team_code
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_teams')
+                field: team_code
+      - name: away_team_code
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_teams')
+                field: team_code
+
+  - name: fct_entry_gameweek_performance
+    description: >
+      Grain: manager (entry) x gameweek. Points, rank, bank, team value,
+      transfers made/cost, active chip. Populates once the season starts.
+    columns:
+      - name: entry_id
+        tests: [not_null]
+      - name: gameweek_id
+        tests: [not_null]
+
+  - name: fct_entry_picks
+    description: >
+      Grain: manager x gameweek x player. Squad composition, captain/vice
+      flags. Populates once each gameweek's deadline passes.
+    columns:
+      - name: player_code
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_players')
+                field: player_code
+
+  - name: fct_entry_transfers
+    description: "Grain: one row per transfer made (player in/out, cost, time)."

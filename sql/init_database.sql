@@ -106,3 +106,17 @@ CREATE TABLE IF NOT EXISTS raw.historical_players_snapshot (
 
 CREATE INDEX IF NOT EXISTS idx_historical_players_snapshot_season
     ON raw.historical_players_snapshot (season, fetched_at);
+
+-- Historical seasons' team list (teams.csv), including the season-specific
+-- team id and the cross-season stable `code` — needed to resolve
+-- opponent_team (a season-specific id in historical_gw_stats_snapshot)
+-- back to a stable team identity.
+CREATE TABLE IF NOT EXISTS raw.historical_teams_snapshot (
+    id         BIGSERIAL PRIMARY KEY,
+    season     TEXT NOT NULL,
+    fetched_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    payload    JSONB NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_historical_teams_snapshot_season
+    ON raw.historical_teams_snapshot (season, fetched_at);

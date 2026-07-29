@@ -21,6 +21,7 @@ select
     (gw ->> 'was_home')::boolean        as was_home,
     (gw ->> 'total_points')::int        as total_points,
     (gw ->> 'minutes')::int             as minutes,
+    (gw ->> 'starts')::int              as starts,
     (gw ->> 'goals_scored')::int        as goals_scored,
     (gw ->> 'assists')::int             as assists,
     (gw ->> 'clean_sheets')::int        as clean_sheets,
@@ -33,5 +34,10 @@ select
     (gw ->> 'ict_index')::numeric       as ict_index,
     (gw ->> 'expected_goals')::numeric  as expected_goals,
     (gw ->> 'expected_assists')::numeric as expected_assists,
+    (gw ->> 'expected_goal_involvements')::numeric as expected_goal_involvements,
+    (gw ->> 'expected_goals_conceded')::numeric    as expected_goals_conceded,
+    (gw ->> 'selected')::bigint         as selected_by_count,
+    (gw ->> 'transfers_in')::int        as transfers_in,
+    (gw ->> 'transfers_out')::int       as transfers_out,
     (gw ->> 'value')::numeric / 10      as price_at_gameweek
 from unnested

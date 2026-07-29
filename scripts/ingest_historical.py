@@ -4,11 +4,14 @@ GitHub archive (https://github.com/vaastav/Fantasy-Premier-League), which the
 official FPL API doesn't expose (bootstrap-static's history_past is season
 summaries only, not gameweek-level detail).
 
-Lands two files per season into raw:
+Lands three files per season into raw:
 - gws/merged_gw.csv    -> raw.historical_gw_stats_snapshot (per-player-gameweek stats)
 - players_raw.csv      -> raw.historical_players_snapshot (that season's player list,
                           including the cross-season-stable `code` field and
                           set-piece order fields)
+- teams.csv            -> raw.historical_teams_snapshot (that season's team list,
+                          including the cross-season-stable `code` field, needed to
+                          resolve opponent_team ids in merged_gw.csv)
 
 Usage:
     python scripts/ingest_historical.py                          # default seasons
@@ -59,6 +62,17 @@ def ingest_historical_players(conn, season: str) -> None:
     print(f"{season}: {len(rows)} players")
 
 
+def ingest_historical_teams(conn, season: str) -> None:
+    rows = fetch_csv_rows(f"{RAW_BASE_URL}/{season}/teams.csv")
+    with conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO raw.historical_teams_snapshot (season, payload) VALUES (%s, %s)",
+            (season, Json(rows)),
+        )
+    conn.commit()
+    print(f"{season}: {len(rows)} teams")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--seasons", nargs="+", default=DEFAULT_SEASONS,
@@ -69,6 +83,7 @@ def main():
     try:
         for season in args.seasons:
             ingest_historical_players(conn, season)
+            ingest_historical_teams(conn, season)
             ingest_historical_gw_stats(conn, season)
     finally:
         conn.close()
