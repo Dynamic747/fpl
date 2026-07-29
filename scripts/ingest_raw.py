@@ -1,9 +1,9 @@
 """
 Pulls raw data from the official Fantasy Premier League API and lands it,
-unmodified, into the bronze schema of the fpl Postgres database.
+unmodified, into the raw schema of the fpl Postgres database.
 
 Each run inserts new snapshot rows rather than overwriting previous ones, so
-the bronze layer accumulates a history of how prices, ownership, and points
+the raw schema accumulates a history of how prices, ownership, and points
 changed over the season.
 
 Usage:
@@ -50,7 +50,7 @@ def ingest_bootstrap_static(conn) -> dict:
     payload = fetch_json(f"{BASE_URL}/bootstrap-static/")
     with conn.cursor() as cur:
         cur.execute(
-            "INSERT INTO bronze.bootstrap_static_snapshot (payload) VALUES (%s)",
+            "INSERT INTO raw.bootstrap_static_snapshot (payload) VALUES (%s)",
             (Json(payload),),
         )
     conn.commit()
@@ -63,7 +63,7 @@ def ingest_fixtures(conn) -> None:
     payload = fetch_json(f"{BASE_URL}/fixtures/")
     with conn.cursor() as cur:
         cur.execute(
-            "INSERT INTO bronze.fixtures_snapshot (payload) VALUES (%s)",
+            "INSERT INTO raw.fixtures_snapshot (payload) VALUES (%s)",
             (Json(payload),),
         )
     conn.commit()
@@ -75,7 +75,7 @@ def ingest_element_summaries(conn, element_ids: list[int], delay: float = 0.3) -
         for i, element_id in enumerate(element_ids, start=1):
             payload = fetch_json(f"{BASE_URL}/element-summary/{element_id}/")
             cur.execute(
-                "INSERT INTO bronze.element_summary_snapshot (element_id, payload) "
+                "INSERT INTO raw.element_summary_snapshot (element_id, payload) "
                 "VALUES (%s, %s)",
                 (element_id, Json(payload)),
             )
@@ -90,7 +90,7 @@ def ingest_entry(conn, entry_id: int) -> None:
     payload = fetch_json(f"{BASE_URL}/entry/{entry_id}/")
     with conn.cursor() as cur:
         cur.execute(
-            "INSERT INTO bronze.entry_snapshot (entry_id, payload) VALUES (%s, %s)",
+            "INSERT INTO raw.entry_snapshot (entry_id, payload) VALUES (%s, %s)",
             (entry_id, Json(payload)),
         )
     conn.commit()
@@ -102,7 +102,7 @@ def ingest_entry_history(conn, entry_id: int) -> None:
     payload = fetch_json(f"{BASE_URL}/entry/{entry_id}/history/")
     with conn.cursor() as cur:
         cur.execute(
-            "INSERT INTO bronze.entry_history_snapshot (entry_id, payload) VALUES (%s, %s)",
+            "INSERT INTO raw.entry_history_snapshot (entry_id, payload) VALUES (%s, %s)",
             (entry_id, Json(payload)),
         )
     conn.commit()
@@ -120,7 +120,7 @@ def ingest_entry_picks(conn, entry_id: int, event_id: int) -> None:
         return
     with conn.cursor() as cur:
         cur.execute(
-            "INSERT INTO bronze.entry_picks_snapshot (entry_id, event_id, payload) "
+            "INSERT INTO raw.entry_picks_snapshot (entry_id, event_id, payload) "
             "VALUES (%s, %s, %s)",
             (entry_id, event_id, Json(payload)),
         )

@@ -4,3 +4,6 @@ __pycache__/
 .env
 data/raw/
 .claude/
+transform/target/
+transform/dbt_packages/
+transform/logs/

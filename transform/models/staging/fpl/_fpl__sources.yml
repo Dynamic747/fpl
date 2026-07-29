@@ -1,0 +1,21 @@
+version: 2
+
+sources:
+  - name: fpl_raw
+    schema: raw
+    description: >
+      Append-only JSONB snapshots landed by scripts/ingest_raw.py, one row
+      per ingestion run. Staging models always select the latest snapshot.
+    tables:
+      - name: bootstrap_static_snapshot
+        description: Full bootstrap-static payload (teams, players, gameweeks, positions).
+      - name: fixtures_snapshot
+        description: Full season fixture list.
+      - name: element_summary_snapshot
+        description: Per-player gameweek history, keyed by element_id.
+      - name: entry_snapshot
+        description: Manager (entry) profile snapshot.
+      - name: entry_history_snapshot
+        description: Manager's past-seasons summary and chip usage.
+      - name: entry_picks_snapshot
+        description: Manager's squad picks for a given gameweek.

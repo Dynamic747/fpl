@@ -1,0 +1,66 @@
+version: 2
+
+models:
+  - name: stg_fpl__gameweeks
+    description: One row per gameweek (event), from the latest bootstrap-static snapshot.
+    columns:
+      - name: gameweek_id
+        tests: [unique, not_null]
+
+  - name: stg_fpl__positions
+    description: Player positions (GK/DEF/MID/FWD), from the latest bootstrap-static snapshot.
+    columns:
+      - name: position_id
+        tests: [unique, not_null]
+
+  - name: stg_fpl__teams
+    description: Premier League teams, from the latest bootstrap-static snapshot.
+    columns:
+      - name: team_id
+        tests: [unique, not_null]
+
+  - name: stg_fpl__players
+    description: Current player attributes (price, form, status), from the latest bootstrap-static snapshot.
+    columns:
+      - name: player_id
+        tests: [unique, not_null]
+      - name: team_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('stg_fpl__teams')
+                field: team_id
+      - name: position_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('stg_fpl__positions')
+                field: position_id
+
+  - name: stg_fpl__fixtures
+    description: Full season fixture list, from the latest fixtures snapshot.
+    columns:
+      - name: fixture_id
+        tests: [unique, not_null]
+
+  - name: stg_fpl__player_gameweek_history
+    description: Per-player, per-gameweek actual stats for gameweeks played so far this season.
+    columns:
+      - name: player_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('stg_fpl__players')
+                field: player_id
+
+  - name: stg_fpl__entries
+    description: Manager (entry) profile, from the latest entry snapshot.
+    columns:
+      - name: entry_id
+        tests: [unique, not_null]
+
+  - name: stg_fpl__entry_season_history
+    description: Manager's season-by-season summary from past seasons.
+
+  - name: stg_fpl__entry_picks
+    description: Manager's squad picks for a given gameweek (only populated once the API exposes them).
