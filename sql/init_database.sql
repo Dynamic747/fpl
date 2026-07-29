@@ -120,3 +120,33 @@ CREATE TABLE IF NOT EXISTS raw.historical_teams_snapshot (
 
 CREATE INDEX IF NOT EXISTS idx_historical_teams_snapshot_season
     ON raw.historical_teams_snapshot (season, fetched_at);
+
+/*
+Squad optimizer output. Populated by scripts/optimize_squad.py (a MILP
+solve, not a dbt model — dbt only manages derived SQL transformations, this
+is an external decision). Each run inserts 15 rows (one per squad slot)
+tagged with generated_at, so recommendations are kept as a history rather
+than overwritten.
+*/
+CREATE SCHEMA IF NOT EXISTS optimizer;
+
+CREATE TABLE IF NOT EXISTS optimizer.squad_recommendations (
+    id                     BIGSERIAL PRIMARY KEY,
+    generated_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+    gameweek_id            INTEGER NOT NULL,
+    player_code            INTEGER NOT NULL,
+    web_name               TEXT NOT NULL,
+    position_id            INTEGER NOT NULL,
+    team_code              INTEGER NOT NULL,
+    price                  NUMERIC NOT NULL,
+    expected_points        NUMERIC NOT NULL,
+    squad_role             TEXT NOT NULL,   -- 'starting' or 'bench'
+    bench_order            INTEGER,         -- null for starting players
+    is_captain             BOOLEAN NOT NULL DEFAULT false,
+    is_vice_captain        BOOLEAN NOT NULL DEFAULT false,
+    total_squad_cost       NUMERIC NOT NULL,
+    total_expected_points  NUMERIC NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_squad_recommendations_gameweek
+    ON optimizer.squad_recommendations (gameweek_id, generated_at);

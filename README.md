@@ -110,3 +110,17 @@ cd transform
     rule, no rotation/team-news signal beyond `chance_of_playing_next_round`).
 
   All materialized as tables in the `marts` schema.
+
+## Squad optimizer
+
+```bash
+.venv/bin/python scripts/optimize_squad.py
+```
+
+Phase 1 only: picks the optimal 15-man squad **from scratch** (no existing
+squad/transfers yet — that's Phase 2, for GW2 onward) via a MILP solve
+(PuLP + CBC) over `marts.fct_player_expected_points`: budget ≤£100m, 2/5/5/3
+squad composition, max 3 players per club, a valid starting XI formation,
+and a captain chosen to maximize total points (captain's points counted
+twice). Persists each run to `optimizer.squad_recommendations` (kept as a
+history, not overwritten) and also prints a readable squad to the terminal.
