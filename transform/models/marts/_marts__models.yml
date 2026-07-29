@@ -116,3 +116,53 @@ models:
               arguments:
                 to: ref('dim_players')
                 field: player_code
+
+  - name: fct_team_gameweek_fixtures
+    description: >
+      Grain: team x gameweek (current season). Flags blank
+      (fixture_count = 0) and double (fixture_count >= 2) gameweeks per
+      team -- the signal chip timing (bench boost, triple captain, free
+      hit) actually depends on. Currently every gameweek has exactly one
+      fixture per team; DGWs/BGWs only appear once fixtures are actually
+      rearranged mid-season and this is rebuilt.
+    columns:
+      - name: team_code
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_teams')
+                field: team_code
+      - name: gameweek_id
+        tests: [not_null]
+
+  - name: fct_player_expected_points_by_gameweek
+    description: >
+      Grain: player x gameweek, for the next 8 (default prediction_horizon_gameweeks)
+      gameweeks. Same formula as fct_player_expected_points, repeated per
+      gameweek in the horizon with that gameweek's specific opponent(s).
+      Feeds fct_player_expected_points_horizon; not intended for
+      single-week decisions.
+    columns:
+      - name: player_code
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_players')
+                field: player_code
+
+  - name: fct_player_expected_points_horizon
+    description: >
+      Grain: one row per current-squad player. Discounted (0.95 per week
+      further out) sum of fct_player_expected_points_by_gameweek across
+      the prediction horizon -- used for season-aware initial squad
+      selection so a player isn't picked purely on one week's fixture.
+      Not for week-to-week decisions (captaincy, transfers) -- use
+      fct_player_expected_points for those.
+    columns:
+      - name: player_code
+        tests:
+          - unique
+          - relationships:
+              arguments:
+                to: ref('dim_players')
+                field: player_code

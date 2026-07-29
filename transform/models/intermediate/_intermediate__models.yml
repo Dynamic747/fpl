@@ -24,3 +24,27 @@ models:
     columns:
       - name: player_code
         tests: [unique, not_null]
+
+  - name: int_positional_baseline
+    description: >
+      Positional-average per-90 rates, weighted by each player's own
+      sample size. Shrinkage target for low-sample players in
+      int_player_form_shrunk.
+    columns:
+      - name: position_id
+        tests: [unique, not_null]
+
+  - name: int_player_form_shrunk
+    description: >
+      One row per current-squad player: int_player_recent_form shrunk
+      toward int_positional_baseline by sample size, plus
+      availability_factor from injury/suspension status. Shared input for
+      any expected-points model regardless of which gameweek(s) it targets.
+    columns:
+      - name: player_code
+        tests:
+          - unique
+          - relationships:
+              arguments:
+                to: ref('dim_players')
+                field: player_code

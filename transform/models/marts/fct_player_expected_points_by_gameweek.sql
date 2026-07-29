@@ -1,30 +1,27 @@
 {#
-    Expected points for each current-squad player for the NEXT unplayed
-    gameweek (dim_gameweeks.is_next). Handles blank gameweeks (0 fixtures
-    that week for a player's team -> 0 expected points) and double
-    gameweeks (2 fixtures -> points summed across both) via a LEFT JOIN to
-    fixtures rather than assuming exactly one match per player.
-
-    Single-gameweek version — for a multi-week horizon (e.g. for initial
-    squad selection that shouldn't overfit to one week's fixtures), see
-    fct_player_expected_points_by_gameweek / fct_player_expected_points_horizon.
-
-    Known simplifications (v1): appearance points are interpolated
-    continuously by expected-minutes fraction rather than FPL's actual 1pt
-    (<60min) / 2pt (60min+) step function; bonus points are carried
-    forward at the player's historical bonus-per-90 rate rather than
-    modeled from BPS components; the 2024-25+ "defensive contribution"
-    points rule isn't modeled at all (no raw tackles/clearances/
-    interceptions data has been ingested); no explicit rotation/team-news
-    signal beyond chance_of_playing_next_round and historical start_rate.
+    Same formula as fct_player_expected_points, but for the next
+    {{ var('prediction_horizon_gameweeks') }} gameweeks instead of just the
+    next one. A player's own rate stats (int_player_form_shrunk) are held
+    fixed across the horizon — only the opponent/fixture-difficulty
+    multiplier changes per gameweek. Used for season-aware initial squad
+    selection (fct_player_expected_points_horizon) rather than single-week
+    decisions like captaincy, which should use fct_player_expected_points.
 #}
 
-with target_gameweek as (
+with target_gameweeks as (
 
-    select gameweek_id
+    select
+        gameweek_id,
+        row_number() over (order by gameweek_id) - 1 as weeks_ahead
     from {{ ref('dim_gameweeks') }}
-    where season = '{{ var("current_season") }}' and is_next = true
-    limit 1
+    where season = '{{ var("current_season") }}'
+      and gameweek_id >= (
+          select gameweek_id from {{ ref('dim_gameweeks') }}
+          where season = '{{ var("current_season") }}' and is_next = true
+          limit 1
+      )
+    order by gameweek_id
+    limit {{ var('prediction_horizon_gameweeks') }}
 
 ),
 
@@ -42,16 +39,17 @@ league_averages as (
 
 player_fixtures as (
 
-    -- LEFT JOIN so blank-gameweek players still get exactly one row
-    -- (fixture_id null) rather than disappearing; double-gameweek players
-    -- get two rows, one per fixture.
+    -- LEFT JOIN so a blank gameweek still gets exactly one row per player
+    -- (fixture_id null) rather than disappearing; a double gameweek gets
+    -- two rows, one per fixture.
     select
         pf.player_code,
+        tg.gameweek_id,
         f.fixture_id,
         case when f.home_team_code = pf.current_team_code then f.away_team_code else f.home_team_code end as opponent_team_code,
         (f.home_team_code = pf.current_team_code) as is_home
     from {{ ref('int_player_form_shrunk') }} pf
-    cross join target_gameweek tg
+    cross join target_gameweeks tg
     left join {{ ref('fct_fixtures') }} f
         on f.gameweek_id = tg.gameweek_id
        and (f.home_team_code = pf.current_team_code or f.away_team_code = pf.current_team_code)
@@ -61,6 +59,7 @@ player_fixtures as (
 fixture_points as (
 
     select
+        pfx.gameweek_id,
         pfx.fixture_id,
         pf.availability_factor * (pf.start_rate * 90 + (1 - pf.start_rate) * 15) as expected_minutes,
 
@@ -99,6 +98,7 @@ fixture_expected_points as (
 
     select
         player_code,
+        gameweek_id,
         fixture_id,
         case when fixture_id is null then 0 else
 
@@ -136,17 +136,15 @@ select
     pf.position_id,
     pf.current_team_code,
     pf.current_price,
-    pf.status,
-    pf.chance_of_playing_next_round,
-    pf.confidence_weight,
     tg.gameweek_id,
-    count(fep.fixture_id)              as fixture_count,
-    coalesce(sum(fep.points), 0)       as expected_points
+    tg.weeks_ahead,
+    count(fep.fixture_id)        as fixture_count,
+    coalesce(sum(fep.points), 0) as expected_points
 from {{ ref('int_player_form_shrunk') }} pf
-cross join target_gameweek tg
-left join fixture_expected_points fep on pf.player_code = fep.player_code
+cross join target_gameweeks tg
+left join fixture_expected_points fep
+    on pf.player_code = fep.player_code and tg.gameweek_id = fep.gameweek_id
 group by
     pf.player_code, pf.web_name, pf.position_id, pf.current_team_code,
-    pf.current_price, pf.status, pf.chance_of_playing_next_round,
-    pf.confidence_weight, tg.gameweek_id
-order by expected_points desc
+    pf.current_price, tg.gameweek_id, tg.weeks_ahead
+order by pf.player_code, tg.gameweek_id

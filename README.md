@@ -82,6 +82,10 @@ cd transform
   season with up to 5 historical seasons. Naturally falls back to
   last-season/career form pre-season (e.g. GW1) with no separate
   cold-start logic.
+- `models/intermediate/int_positional_baseline`, `int_player_form_shrunk`
+  — shared shrinkage inputs (positional average + sample-size-weighted
+  blend + availability_factor), reused by both the single-gameweek and
+  multi-gameweek expected-points models below.
 - `seeds/scoring_rules.csv` — FPL's position-based point values (goals,
   assists, clean sheets, cards, etc.), loaded via `dbt seed`.
 - `models/marts/` — dimensional model (Kimball-style, natural keys, no
@@ -108,6 +112,18 @@ cd transform
     `fixture_count`. See the model file's header comment for known v1
     simplifications (no bonus-points/BPS modeling, no defensive-contribution
     rule, no rotation/team-news signal beyond `chance_of_playing_next_round`).
+  - `fct_player_expected_points_by_gameweek` — same formula, repeated for
+    the next `prediction_horizon_gameweeks` (default 8) gameweeks with
+    each week's specific opponent. Feeds `fct_player_expected_points_horizon`
+    (a discounted season-aware sum per player) — used for squad
+    *construction* so a player isn't picked purely on one week's fixture.
+    Use the single-gameweek model above for weekly decisions instead.
+  - `fct_team_gameweek_fixtures` — grain: team × gameweek. Flags blank
+    (0 fixtures) and double (2+ fixtures) gameweeks per team — the signal
+    chip timing actually depends on. Currently every gameweek has exactly
+    one fixture per team; DGWs/BGWs only get created by fixture
+    rearrangements confirmed later in the season, which this will pick up
+    automatically on the next rebuild.
 
   All materialized as tables in the `marts` schema.
 
@@ -117,10 +133,17 @@ cd transform
 .venv/bin/python scripts/optimize_squad.py
 ```
 
-Phase 1 only: picks the optimal 15-man squad **from scratch** (no existing
-squad/transfers yet — that's Phase 2, for GW2 onward) via a MILP solve
-(PuLP + CBC) over `marts.fct_player_expected_points`: budget ≤£100m, 2/5/5/3
-squad composition, max 3 players per club, a valid starting XI formation,
-and a captain chosen to maximize total points (captain's points counted
-twice). Persists each run to `optimizer.squad_recommendations` (kept as a
-history, not overwritten) and also prints a readable squad to the terminal.
+Phase 1 only: two-stage MILP solve (PuLP + CBC), no existing squad/transfers
+yet (that's Phase 2, for GW2 onward):
+
+1. **Squad** (which 15 to own) — maximizes `fct_player_expected_points_horizon`
+   (season-aware) subject to budget ≤£100m, 2/5/5/3 composition, max 3 per
+   club. Who you own is a season-long decision.
+2. **Lineup** (who starts + captains, given that fixed 15) — maximizes
+   `fct_player_expected_points` (single-gameweek) subject to a valid
+   starting XI formation. Captaincy/lineup should reflect *this week's*
+   fixtures, not a discounted season-wide score — re-run this stage each
+   week even once a squad exists.
+
+Persists each run to `optimizer.squad_recommendations` (kept as a history,
+not overwritten) and also prints a readable squad to the terminal.

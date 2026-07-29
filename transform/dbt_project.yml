@@ -6,6 +6,7 @@ profile: 'fpl'
 
 vars:
   current_season: '2026-27'
+  prediction_horizon_gameweeks: 8
 
 model-paths: ["models"]
 macro-paths: ["macros"]
