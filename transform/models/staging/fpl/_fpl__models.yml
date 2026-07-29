@@ -81,3 +81,19 @@ models:
       One row per manager per gameweek: bank, team value, transfers made/cost,
       active chip, and points for that gameweek. Companion to stg_fpl__entry_picks
       (which is one row per player pick) — only populated once the API exposes picks.
+
+  - name: stg_fpl__entry_transfers
+    description: Manager's transfer log — one row per transfer made (player in/out, cost, time).
+
+  - name: stg_fpl__historical_players
+    description: >
+      One row per player per past season, from the vaastav GitHub archive.
+      season_player_id and season_team_id are only valid within that season;
+      player_code is stable across seasons and is the join key for
+      cross-season player identity.
+
+  - name: stg_fpl__historical_player_gameweek_stats
+    description: >
+      One row per player per gameweek per past season, from the vaastav GitHub
+      archive. This is the training-data source the live pipeline can't provide
+      until this season's gameweeks are actually played.

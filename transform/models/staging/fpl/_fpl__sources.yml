@@ -19,3 +19,14 @@ sources:
         description: Manager's past-seasons summary and chip usage.
       - name: entry_picks_snapshot
         description: Manager's squad picks for a given gameweek.
+      - name: entry_transfers_snapshot
+        description: Manager's transfer log (player in/out, cost, timestamp).
+      - name: historical_gw_stats_snapshot
+        description: >
+          Bulk-loaded from vaastav/Fantasy-Premier-League on GitHub: one row per
+          season, payload is that season's full player-gameweek stats CSV as JSON.
+      - name: historical_players_snapshot
+        description: >
+          Bulk-loaded from vaastav/Fantasy-Premier-League on GitHub: one row per
+          season, payload is that season's player list CSV as JSON (includes the
+          cross-season-stable `code` field and set-piece order fields).

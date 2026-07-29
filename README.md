@@ -31,6 +31,21 @@ Pulls from `https://fantasy.premierleague.com/api/`:
 - `element-summary/{id}/` — per-player gameweek-by-gameweek history
 - `entry/{FPL_ENTRY_ID}/` and `entry/{FPL_ENTRY_ID}/history/` — manager profile and season history
 - `entry/{FPL_ENTRY_ID}/event/{gw}/picks/` — squad picks for a gameweek (pass `--picks-event N`; 404s until that gameweek's deadline passes)
+- `entry/{FPL_ENTRY_ID}/transfers/` — manager's transfer log
+
+## Ingest historical seasons (one-off bulk load)
+
+```bash
+.venv/bin/python scripts/ingest_historical.py
+```
+
+The official API only exposes gameweek-level detail for the *current*
+season. For model training data across past seasons, this bulk-loads CSVs
+from the [vaastav/Fantasy-Premier-League](https://github.com/vaastav/Fantasy-Premier-League)
+GitHub archive (default: last 5 completed seasons — pass `--seasons` to
+change). Player identity across seasons isn't stable via `id` (FPL reassigns
+it each season) — use the `code` field instead, which vaastav's
+`players_raw.csv` also includes.
 
 ## Raw schema
 
@@ -41,7 +56,8 @@ and points changes across the season:
 
 - `raw.bootstrap_static_snapshot`, `raw.fixtures_snapshot`
 - `raw.element_summary_snapshot` (one row per player per run)
-- `raw.entry_snapshot`, `raw.entry_history_snapshot`, `raw.entry_picks_snapshot`
+- `raw.entry_snapshot`, `raw.entry_history_snapshot`, `raw.entry_picks_snapshot`, `raw.entry_transfers_snapshot`
+- `raw.historical_players_snapshot`, `raw.historical_gw_stats_snapshot` (one row per season per load)
 
 ## Transform (dbt)
 

@@ -49,5 +49,8 @@ select
     (player ->> 'expected_goal_involvements')::numeric as expected_goal_involvements,
     (player ->> 'expected_goals_conceded')::numeric   as expected_goals_conceded,
     (player ->> 'transfers_in_event')::int            as transfers_in_event,
-    (player ->> 'transfers_out_event')::int           as transfers_out_event
+    (player ->> 'transfers_out_event')::int           as transfers_out_event,
+    (player ->> 'penalties_order')::int               as penalties_order,
+    (player ->> 'direct_freekicks_order')::int        as direct_freekicks_order,
+    (player ->> 'corners_and_indirect_freekicks_order')::int as corners_and_indirect_freekicks_order
 from unnested

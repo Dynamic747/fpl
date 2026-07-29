@@ -128,6 +128,17 @@ def ingest_entry_picks(conn, entry_id: int, event_id: int) -> None:
     print(f"entry {entry_id} picks for GW{event_id}: {len(payload.get('picks', []))} picks")
 
 
+def ingest_entry_transfers(conn, entry_id: int) -> None:
+    payload = fetch_json(f"{BASE_URL}/entry/{entry_id}/transfers/")
+    with conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO raw.entry_transfers_snapshot (entry_id, payload) VALUES (%s, %s)",
+            (entry_id, Json(payload)),
+        )
+    conn.commit()
+    print(f"entry {entry_id} transfers: {len(payload)} transfers made")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--skip-players", action="store_true",
@@ -154,6 +165,7 @@ def main():
         if args.entry_id:
             ingest_entry(conn, args.entry_id)
             ingest_entry_history(conn, args.entry_id)
+            ingest_entry_transfers(conn, args.entry_id)
             if args.picks_event:
                 ingest_entry_picks(conn, args.entry_id, args.picks_event)
     finally:
