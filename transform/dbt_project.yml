@@ -10,6 +10,7 @@ vars:
 model-paths: ["models"]
 macro-paths: ["macros"]
 test-paths: ["tests"]
+seed-paths: ["seeds"]
 clean-targets: ["target", "dbt_packages"]
 
 models:
@@ -23,3 +24,7 @@ models:
     marts:
       +materialized: table
       +schema: marts
+
+seeds:
+  fpl:
+    +schema: reference

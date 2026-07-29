@@ -97,3 +97,22 @@ models:
 
   - name: fct_entry_transfers
     description: "Grain: one row per transfer made (player in/out, cost, time)."
+
+  - name: fct_player_expected_points
+    description: >
+      Grain: one row per current-squad player, predicting points for the
+      NEXT unplayed gameweek (dim_gameweeks.is_next). Statistical formula
+      (not ML): int_player_recent_form's rates, shrunk toward a positional
+      baseline by sample size, scaled by expected minutes and a
+      fixture-difficulty multiplier from dim_teams strength ratings.
+      fixture_count is 0 for a blank gameweek, 2+ for a double gameweek
+      (points summed across all fixtures that week). See the model's
+      top-of-file comment for known v1 simplifications.
+    columns:
+      - name: player_code
+        tests:
+          - unique
+          - relationships:
+              arguments:
+                to: ref('dim_players')
+                field: player_code

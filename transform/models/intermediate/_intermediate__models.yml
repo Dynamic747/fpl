@@ -13,3 +13,14 @@ models:
         tests: [not_null]
       - name: gameweek_id
         tests: [not_null]
+
+  - name: int_player_recent_form
+    description: >
+      One row per player: recency-weighted per-90 rate stats blending
+      current-season and up to 5 historical seasons (weight decays 0.55
+      per season back). total_weight is a recency-weighted gameweek count
+      used downstream as a confidence signal for shrinkage toward a
+      positional baseline.
+    columns:
+      - name: player_code
+        tests: [unique, not_null]

@@ -1,0 +1,5 @@
+position_id,position_name,goal_points,assist_points,clean_sheet_points,points_per_60_min_start,points_per_short_appearance,goals_conceded_penalty_per_2,yellow_card_points,red_card_points,own_goal_points,penalty_miss_points,penalty_save_points,save_points_per_3
+1,Goalkeeper,6,3,4,2,1,-1,-1,-3,-2,-2,5,1
+2,Defender,6,3,4,2,1,-1,-1,-3,-2,-2,5,1
+3,Midfielder,5,3,1,2,1,0,-1,-3,-2,-2,5,1
+4,Forward,4,3,0,2,1,0,-1,-3,-2,-2,5,1
