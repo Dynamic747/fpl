@@ -83,6 +83,12 @@ player_form as (
         d.current_price,
         d.status,
         d.chance_of_playing_next_round,
+        -- if status isn't 'a' (available) and no percentage is given, treat as
+        -- 0% rather than defaulting to fully fit — a flagged-unavailable
+        -- player with no percentage should not be assumed to play
+        case when d.status = 'a' then coalesce(d.chance_of_playing_next_round, 100) / 100.0
+             else coalesce(d.chance_of_playing_next_round, 0) / 100.0
+        end as availability_factor,
         coalesce(r.total_weight, 0) / 10.0 as confidence_weight,
         (coalesce(r.total_weight, 0) / 10.0 * coalesce(r.start_rate, 0) + pb.start_rate)
             / (coalesce(r.total_weight, 0) / 10.0 + 1.0) as start_rate,
@@ -137,7 +143,7 @@ fixture_points as (
 
     select
         pfx.fixture_id,
-        (pf.start_rate * 90 + (1 - pf.start_rate) * 15) as expected_minutes,
+        pf.availability_factor * (pf.start_rate * 90 + (1 - pf.start_rate) * 15) as expected_minutes,
 
         case when pfx.is_home
              then la.avg_defence_away / nullif(ot.strength_defence_away, 0)
@@ -183,7 +189,7 @@ fixture_expected_points as (
 
             + (expected_minutes / 90.0) * assists_per_90 * attack_multiplier * assist_points
 
-            + start_rate * clean_sheet_rate_per_start * defence_multiplier * clean_sheet_points
+            + availability_factor * start_rate * clean_sheet_rate_per_start * defence_multiplier * clean_sheet_points
 
             + (expected_minutes / 90.0) * (goals_conceded_per_90 / nullif(defence_multiplier, 0)) / 2.0
                 * goals_conceded_penalty_per_2
