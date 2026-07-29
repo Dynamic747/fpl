@@ -62,5 +62,22 @@ models:
   - name: stg_fpl__entry_season_history
     description: Manager's season-by-season summary from past seasons.
 
+  - name: stg_fpl__entry_gameweek_history
+    description: >
+      Manager's this-season gameweek-by-gameweek history: points, rank,
+      bank, team value, transfers made and their cost, points left on bench.
+      Populates once the season starts.
+
+  - name: stg_fpl__entry_chips
+    description: >
+      Which chips (wildcard, bench boost, triple captain, free hit) the
+      manager has played and on which gameweek. Populates as chips are used.
+
   - name: stg_fpl__entry_picks
-    description: Manager's squad picks for a given gameweek (only populated once the API exposes them).
+    description: Manager's squad picks (one row per player) for a given gameweek (only populated once the API exposes them).
+
+  - name: stg_fpl__entry_picks_summary
+    description: >
+      One row per manager per gameweek: bank, team value, transfers made/cost,
+      active chip, and points for that gameweek. Companion to stg_fpl__entry_picks
+      (which is one row per player pick) — only populated once the API exposes picks.
