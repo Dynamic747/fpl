@@ -173,3 +173,36 @@ recommends no changes, a clearly-bad player gets a free swap, two bad
 players get fixed with a hit when the net gain justifies it, and a
 marginal improvement smaller than the hit cost is correctly declined),
 not real advice, until a real squad exists to optimize.
+
+## Chip strategy (Phase 3b)
+
+```bash
+.venv/bin/python scripts/chip_strategy.py
+```
+
+Evaluates Wildcard/Bench Boost/Triple Captain/Free Hit against the current
+squad across the visible prediction horizon (default 8 gameweeks) and
+prints the best current candidates for each, persisting to
+`optimizer.chip_opportunities`.
+
+**This is not a locked schedule.** The confirmed 2026-27 rule is one of
+each chip per half-season (through the GW19 deadline, fresh set for
+GW20-38, no rollover — see project memory). The visible horizon here is
+well short of that 19-week window, and as of any given run there may be
+no known double/blank gameweek anywhere in the fixture list yet — those
+only appear once fixture rearrangements are actually confirmed, often
+just weeks in advance. Default posture is to **hold every chip** unless a
+value clearly stands out, and re-run this regularly as the season
+reveals real DGW/BGW information.
+
+- **Bench Boost / Triple Captain** value per gameweek: computed directly
+  from the current squad's per-week lineup solve (`solve_lineup` with an
+  explicit per-gameweek score override).
+- **Free Hit** value per gameweek: (best possible any-15 squad's
+  starting-XI value that week) − (current squad's actual starting-XI
+  value that week) — a real "opportunity cost" metric even without a
+  literal blank gameweek, though it spikes hardest during one.
+- **Wildcard** isn't gameweek-specific like the others — it's a squad-drift
+  question, computed by comparing `optimize_transfers.solve_transfers` in
+  normal (hit-costed) vs `--wildcard` (unlimited, zero-cost) mode; a small
+  gap means ordinary transfers can already get there for less.

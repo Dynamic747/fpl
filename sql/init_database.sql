@@ -150,3 +150,22 @@ CREATE TABLE IF NOT EXISTS optimizer.squad_recommendations (
 
 CREATE INDEX IF NOT EXISTS idx_squad_recommendations_gameweek
     ON optimizer.squad_recommendations (gameweek_id, generated_at);
+
+/*
+Chip-timing evaluation output. Populated by scripts/chip_strategy.py.
+Only covers the visible prediction horizon (default 8 gameweeks), not the
+full up-to-19-week half-season chip window -- these are provisional
+best-current-guess rankings, not a locked schedule, and should be
+re-evaluated regularly as the season reveals double/blank gameweeks.
+*/
+CREATE TABLE IF NOT EXISTS optimizer.chip_opportunities (
+    id                 BIGSERIAL PRIMARY KEY,
+    generated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    chip_name          TEXT NOT NULL,   -- 'wildcard', 'bench_boost', 'triple_captain', 'free_hit'
+    gameweek_id        INTEGER,         -- null for wildcard (a squad-drift decision, not gameweek-specific)
+    opportunity_value  NUMERIC NOT NULL,
+    detail             TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_chip_opportunities_generated
+    ON optimizer.chip_opportunities (generated_at);

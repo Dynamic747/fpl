@@ -25,17 +25,22 @@ def fetch_players(conn):
         return [dict(zip(columns, row)) for row in cur.fetchall()]
 
 
-def solve_lineup(players: list[dict], squad_codes: list[int]) -> dict:
-    """Given a fixed 15-man squad, pick this week's starting XI + captain by
-    single-gameweek score (captaincy/lineup should reflect this week's
-    fixtures, not a discounted season-wide score)."""
+def solve_lineup(players: list[dict], squad_codes: list[int], xpts_override: dict[int, float] = None) -> dict:
+    """Given a fixed 15-man squad, pick a gameweek's starting XI + captain by
+    single-gameweek score (captaincy/lineup should reflect that week's
+    fixtures, not a discounted season-wide score).
+
+    xpts_override lets callers evaluate a *different* gameweek than "next"
+    (e.g. chip_strategy.py scanning the whole horizon) by supplying
+    {player_code: expected_points for that week} instead of relying on
+    each player's gw_expected_points field, which is always "next gameweek"."""
     import pulp
 
     prob = pulp.LpProblem("fpl_lineup_selection", pulp.LpMaximize)
 
     by_code = {p["player_code"]: p for p in players}
     codes = squad_codes
-    gw_xpts = {c: float(by_code[c]["gw_expected_points"]) for c in codes}
+    gw_xpts = xpts_override or {c: float(by_code[c]["gw_expected_points"]) for c in codes}
 
     start = pulp.LpVariable.dicts("start", codes, cat="Binary")
     captain = pulp.LpVariable.dicts("captain", codes, cat="Binary")
