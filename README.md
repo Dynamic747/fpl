@@ -147,3 +147,29 @@ yet (that's Phase 2, for GW2 onward):
 
 Persists each run to `optimizer.squad_recommendations` (kept as a history,
 not overwritten) and also prints a readable squad to the terminal.
+
+## Transfer optimizer (Phase 2)
+
+```bash
+.venv/bin/python scripts/optimize_transfers.py
+.venv/bin/python scripts/optimize_transfers.py --wildcard   # unlimited rebuild, no hit cost
+```
+
+Given an *existing* squad, decides which transfers (if any) are worth
+making: weighs expected-points gain against the real -4/transfer hit cost
+beyond free transfers available, subject to the actual budget (bank + sell
+value of transferred-out players, using FPL's confirmed 50% sell-on-fee
+rule and 5-transfer free-transfer cap — both read directly from this
+project's own `raw.bootstrap_static_snapshot` `game_settings`, not
+assumed). Squad membership still uses the season-aware horizon score;
+`solve_lineup` (shared with `optimize_squad.py` via `optimizer_common.py`)
+picks each week's starting XI/captain from single-gameweek scores.
+
+Current-squad source: `fct_entry_picks` once real (post-GW1) data exists,
+falling back to this project's own last `optimizer.squad_recommendations`
+run pre-season — so right now, results are a validated simulation of the
+mechanics (tested against known trade-offs: an already-optimal squad
+recommends no changes, a clearly-bad player gets a free swap, two bad
+players get fixed with a hit when the net gain justifies it, and a
+marginal improvement smaller than the hit cost is correctly declined),
+not real advice, until a real squad exists to optimize.
